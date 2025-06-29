@@ -21,23 +21,16 @@ app.get("/products", async (req, res) => {
 
 app.post("/products", async (req, res) => {
   const { name, price } = req.body;
-  if (!name || price === undefined) {
-    return res.status(400).json({ error: "Name and price required" });
-  }
-  try {
-    const [result] = await db.query(
-      "INSERT INTO products (name, price) VALUES (?, ?) [name, price]"
-    );
-    await connection.release();
+  const query = "INSERT INTO products (name, price) VALUES (?, ?)";
 
-    res.status(201).json({
-      message: "The product successfully added",
-      productId: result.insertId,
-    });
-  } catch (error) {
-    console.error("Error during adding product");
-    res.status(500).json({ error: "Error during adding product" });
-  }
+  connection.query(query, [name, price], (err, result) => {
+    if (err) {
+      console.error("Error adding product:", err.stack);
+      res.status(500).send("Error adding product");
+      return;
+    }
+    res.status(201).send("Product added successfully");
+  });
 });
 
 app.use((err, req, res, next) => {
